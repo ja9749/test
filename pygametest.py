@@ -1,5 +1,6 @@
 #Region Imports
 import pygame
+import player
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -81,13 +82,13 @@ def generate_maze(width, height):
 
 	return maze
 
-def draw_maze(gameDisplay, maze, player_position, goal_position):
+def draw_maze(gameDisplay, maze, pl, goal_position):
 	gameDisplay.fill(WHITE)
 	pygame.draw.rect(gameDisplay, BLACK, [BLOCK_SIZE, BLOCK_SIZE, MAZE_WIDTH * 3 * BLOCK_SIZE, MAZE_HEIGHT * 3 * BLOCK_SIZE])
 	for i in range(0, MAZE_HEIGHT):
 		for j in range(0, MAZE_WIDTH):
-			if i == player_position[0] and j == player_position[1]:
-				pygame.draw.rect(gameDisplay, BLUE, [2 * BLOCK_SIZE +  player_position[1] * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + player_position[0] * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
+			if i == pl.x and j == pl.y:
+				pygame.draw.rect(gameDisplay, BLUE, [2 * BLOCK_SIZE +  pl.y * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + pl.x * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
 			elif i == goal_position[0] and j == goal_position[1]:
 				pygame.draw.rect(gameDisplay, RED, [2 * BLOCK_SIZE +  goal_position[1] * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + goal_position[0] * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
 			else:
@@ -101,9 +102,9 @@ def draw_maze(gameDisplay, maze, player_position, goal_position):
 			if maze[i][j] & 8:
 				 pygame.draw.rect(gameDisplay, WHITE, [2 * BLOCK_SIZE +  j * 3 * BLOCK_SIZE, 3 * BLOCK_SIZE + i * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
 
-def redraw_player(gameDisplay, last_position, player_position):
+def redraw_pl(gameDisplay, last_position, pl):
 	pygame.draw.rect(gameDisplay, WHITE, [2 * BLOCK_SIZE +  last_position[1] * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + last_position[0] * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
-	pygame.draw.rect(gameDisplay, BLUE, [2 * BLOCK_SIZE +  player_position[1] * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + player_position[0] * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
+	pygame.draw.rect(gameDisplay, BLUE, [2 * BLOCK_SIZE +  pl.y * 3 * BLOCK_SIZE, 2 * BLOCK_SIZE + pl.x * 3 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE])
 
 def initialise():
 	pygame.init()
@@ -111,14 +112,14 @@ def initialise():
 	gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 
 	maze = generate_maze(MAZE_WIDTH, MAZE_HEIGHT)
-	player = [0, 0]
+	pl = player.Player(0, 0)
 	goal_position = [MAZE_HEIGHT - 1, MAZE_WIDTH - 1]
 
-	return [gameDisplay, maze, player, goal_position]
+	return [gameDisplay, maze, pl, goal_position]
 
-def move_player(direction, player_position, maze):
-	px = player_position[0]
-	py = player_position[1]
+def move_pl(direction, pl, maze):
+	px = pl.x
+	py = pl.y
 
 	if direction == pygame.K_LEFT and maze[px][py] & 4:
 			py -= 1
@@ -129,19 +130,19 @@ def move_player(direction, player_position, maze):
 	elif direction == pygame.K_DOWN and maze[px][py] & 8:
 			px += 1
 
-	return [player_position, [px, py]]
+	return [[pl.x, pl.y], player.Player(px, py)]
 
 def main():
-	[gameDisplay, maze, player_position, goal_position] = initialise()	
+	[gameDisplay, maze, pl, goal_position] = initialise()	
 	
-	last_position = player_position
+	last_position = [pl.x, pl.y]
 	gameExit = False
 	redraw = True
 
-	draw_maze(gameDisplay, maze, player_position, goal_position)
+	draw_maze(gameDisplay, maze, pl, goal_position)
 	while not gameExit:
 
-		if goal_position[0] == player_position[0] and goal_position[1] == player_position[1]:
+		if goal_position[0] == pl.x and goal_position[1] == pl.y:
 			print("You Win!")
 			gameExit = True
 
@@ -152,11 +153,11 @@ def main():
 				if event.key == pygame.K_q:
 					gameExit = True
 				else:
-					[last_position, player_position] = move_player(event.key, player_position, maze)
+					[last_position, pl] = move_pl(event.key, pl, maze)
 					redraw = True
 
 		if redraw:
-			redraw_player(gameDisplay, last_position, player_position)
+			redraw_pl(gameDisplay, last_position, pl)
 			pygame.display.update()
 			redraw = False
 
